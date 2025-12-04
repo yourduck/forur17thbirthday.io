@@ -20,20 +20,19 @@
     }
 
     h1 {
-        font-size: 6vw; /* responsive font size */
-        margin-bottom: 1vh;
+        font-size: 28px;
+        margin-bottom: 10px;
     }
 
     p {
-        font-size: 4vw;
-        margin-bottom: 2vh;
+        font-size: 16px;
+        margin-bottom: 20px;
         color: #ccc;
     }
 
     canvas {
         border-radius: 10px;
         cursor: pointer;
-        touch-action: none; /* prevents scrolling on touch */
     }
 </style>
 </head>
@@ -41,21 +40,11 @@
 
 <h1>Happy Birthday Taha! :3</h1>
 <p>Click the raccoon to celebrate!</p>
-<canvas id="canvas"></canvas>
+<canvas id="canvas" width="500" height="500"></canvas>
 
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-
-// Make canvas full screen
-function resizeCanvas() {
-    canvas.width = window.innerWidth * 0.9; // 90% of screen width
-    canvas.height = window.innerHeight * 0.6; // 60% of screen height
-    draw();
-}
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas(); // initial size
 
 // Load images
 const background = new Image();
@@ -71,28 +60,19 @@ raccoonFlipped.src = 'raccoon_flipped.png';
 const audio = new Audio('happy_birthday.mp3');
 audio.volume = 1.0;
 
-// Raccoon settings (proportional to canvas)
-let rac = {
+// Raccoon settings
+const rac = {
     x: canvas.width / 2,
     y: canvas.height / 2,
-    width: canvas.width * 0.3,  // 30% of canvas width
-    height: canvas.width * 0.3, // keep square
+    width: 300,
+    height: 300,
     flipped: false,
     dancing: false,
     interval: null
 };
 
-// Update raccoon size/position on resize
-function updateRac() {
-    rac.width = canvas.width * 0.3;
-    rac.height = rac.width;
-    rac.x = canvas.width / 2;
-    rac.y = canvas.height / 2;
-}
-
 // Draw function
 function draw() {
-    // Background
     if (background.complete && background.naturalWidth > 0) {
         ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
     } else {
@@ -100,7 +80,6 @@ function draw() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Raccoon
     const img = rac.flipped ? raccoonFlipped : raccoon;
     if (img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, rac.x - rac.width / 2, rac.y - rac.height / 2, rac.width, rac.height);
@@ -116,15 +95,20 @@ function startDance() {
 
     rac.dancing = true;
     audio.currentTime = 0;
-    audio.play().catch(console.log);
 
-    // Flip raccoon every 400ms for smoother dancing
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log('Audio playback failed:', error);
+            setTimeout(() => audio.play().catch(() => {}), 100);
+        });
+    }
+
     rac.interval = setInterval(() => {
         rac.flipped = !rac.flipped;
         draw();
-    }, 400);
+    }, 600);
 
-    // Stop when audio ends
     audio.onended = stopDance;
 }
 
@@ -163,12 +147,6 @@ function handleClick(e) {
 
 canvas.addEventListener('click', handleClick);
 canvas.addEventListener('touchstart', handleClick);
-
-// Update raccoon position/size on resize
-window.addEventListener('resize', () => {
-    updateRac();
-    draw();
-});
 
 // Initial draw
 draw();
